@@ -1,0 +1,6 @@
+{
+  "jobs": [
+    {"ref": "shot1", "kind": "generate", "prompt": "Wide shot: a fox walks out of a snowy forest at dawn", "aspect": "16:9", "seconds": 6},
+    {"ref": "shot2", "kind": "generate", "prompt": "Close-up: the fox sniffs the air, breath steaming", "aspect": "16:9", "seconds": 6}
+  ]
+}
