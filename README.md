@@ -36,7 +36,7 @@ freevideo-python/
 
 ```bat
 cd C:\
-git clone https://github.com/<you>/freevideo-python.git fv
+git clone https://github.com/BlackGrouse1/super-barnacle.git fv
 cd C:\fv\FreeVideo
 ```
 
@@ -63,7 +63,7 @@ py freevideo_api.py video -p "Neon city at night, rain, camera flies forward" --
 ## ⚡ Быстрый старт — Linux / macOS
 
 ```bash
-git clone https://github.com/<you>/freevideo-python.git && cd freevideo-python
+git clone https://github.com/BlackGrouse1/super-barnacle.git && cd super-barnacle
 cd FreeVideo && ./setup.sh && cd ..      # Linux; на Mac удобнее FreeVideo.app из релизов
 python3 freevideo_api.py status
 ```
