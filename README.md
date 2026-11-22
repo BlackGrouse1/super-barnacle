@@ -17,22 +17,56 @@
 
 > Это неофициальный клиент. Сам FreeVideo и модели ставятся обычным установщиком проекта.
 
-## ⚡ Быстрый старт
+## 📦 Что внутри
 
-1. Установи и запусти **FreeVideo** ([релизы](https://github.com/FlashML-org/FreeVideo/releases/latest)) — он скачает модели и поднимет локальный сервер. Окно браузера можно закрыть, сервер должен работать.
-2. Скачай скрипт:
+```
+freevideo-python/
+├── freevideo_api.py   ← клиент и CLI (один файл, без зависимостей)
+├── examples/          ← готовые сценарии
+└── FreeVideo/         ← исходники FreeVideo (Apache-2.0), чтобы всё было в одном репо
+```
+
+Папка `FreeVideo/` — копия [FlashML-org/FreeVideo](https://github.com/FlashML-org/FreeVideo) на коммите `d53d1b2` (21.11.2026). Её лицензия и NOTICE лежат внутри.
+
+## ⚡ Быстрый старт — Windows
+
+Нужны NVIDIA GPU (от 8 ГБ VRAM), 16+ ГБ RAM, [Git](https://git-scm.com/download/win) и много места на диске под модели.
+
+1. Склонируй **в короткий путь** — у Windows ограничение на длину путей:
+
+```bat
+cd C:\
+git clone https://github.com/<you>/freevideo-python.git fv
+cd C:\fv\FreeVideo
+```
+
+2. Установи FreeVideo (Python-окружение, ComfyUI и модели скачаются сами, это долго):
+
+```bat
+setup.cmd
+```
+
+В конце FreeVideo откроется в браузере. В следующий раз запускай его так: `C:\fv\FreeVideo\freevideo.cmd`.
+
+3. Пока FreeVideo запущен, во втором окне терминала:
+
+```bat
+cd C:\fv
+py freevideo_api.py status
+py freevideo_api.py video -p "Neon city at night, rain, camera flies forward" --seconds 8 -o city.mp4
+```
+
+Скрипт сам найдёт адрес и токен в `FreeVideo\agent\`. Если ставил FreeVideo по-другому (через FreeVideo.exe), укажи `--root <папка установки>` или переменные `FREEVIDEO_URL` / `FREEVIDEO_TOKEN`.
+
+> Вместо шага 2 можно взять готовый установщик [FreeVideo.exe](https://github.com/FlashML-org/FreeVideo/releases/latest/download/FreeVideo.exe) — скрипт работает с ним точно так же.
+
+## ⚡ Быстрый старт — Linux / macOS
 
 ```bash
 git clone https://github.com/<you>/freevideo-python.git && cd freevideo-python
-```
-
-3. Проверь подключение:
-
-```bash
+cd FreeVideo && ./setup.sh && cd ..      # Linux; на Mac удобнее FreeVideo.app из релизов
 python3 freevideo_api.py status
 ```
-
-Скрипт сам найдёт адрес сервера и токен (`<папка FreeVideo>/agent/token`). Если не нашёл — укажи `--root /путь/к/FreeVideo` или переменные `FREEVIDEO_URL` / `FREEVIDEO_TOKEN`.
 
 ## 🐍 Из Python
 

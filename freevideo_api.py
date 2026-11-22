@@ -59,6 +59,8 @@ class FreeVideoError(Exception):
 def candidate_roots():
     if os.environ.get('FREEVIDEO_HOME'):
         yield Path(os.environ['FREEVIDEO_HOME']).expanduser()
+    # FreeVideo из этого репозитория (setup.cmd / setup.sh ставит всё в свою папку)
+    yield Path(__file__).resolve().parent / 'FreeVideo'
     home = Path.home()
     yield home / '.local' / 'share' / 'freevideo'
     yield home / 'Library' / 'Application Support' / 'FreeVideo'

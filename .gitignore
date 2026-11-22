@@ -1,12 +1,16 @@
+# Python
 __pycache__/
 *.py[cod]
 .venv/
 venv/
 .DS_Store
-*.mp4
-*.mov
-*.png
-*.jpg
-*.jpeg
-*.wav
-!examples/**/*.json
+
+# Результаты генерации в корне репозитория
+/*.mp4
+/*.mov
+/*.png
+/*.jpg
+/*.jpeg
+/*.webp
+/*.wav
+/output/
