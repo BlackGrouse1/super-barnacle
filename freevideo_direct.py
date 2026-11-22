@@ -51,6 +51,72 @@ def engine_command(override=None):
     return [str(path)]
 
 
+def ready(root):
+    try:
+        return json.loads((root / 'machine.json').read_text(encoding='utf-8')).get('ready') is True
+    except (OSError, ValueError, AttributeError):
+        return False
+
+
+def launcher_engines():
+    """Папки движка, которые запомнил установщик FreeVideo.exe (%LOCALAPPDATA%\\FreeVideo-launcher)."""
+    base = Path(os.environ.get('FREEVIDEO_LAUNCHER_HOME') or Path(os.environ.get('LOCALAPPDATA') or Path.home())
+                / 'FreeVideo-launcher')
+    found = []
+
+    def walk(value):
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if isinstance(child, str) and key in ('engine', 'root', 'destination', 'comfy', 'installation'):
+                    path = Path(child).expanduser()
+                    found.extend([path, path / 'FreeVideo-engine', path.parent / 'FreeVideo-engine'])
+                walk(child)
+        elif isinstance(value, list):
+            for child in value:
+                walk(child)
+    try:
+        for file in base.glob('*.json'):
+            try:
+                walk(json.loads(file.read_text(encoding='utf-8')))
+            except (OSError, ValueError):
+                pass
+    except OSError:
+        pass
+    return found
+
+
+def find_installation(explicit=None):
+    """Папка установки, где лежит готовый machine.json."""
+    if explicit:
+        return Path(explicit).expanduser().resolve()
+    home = Path.home()
+    candidates = []
+    if os.environ.get('FREEVIDEO_HOME'):
+        candidates.append(Path(os.environ['FREEVIDEO_HOME']).expanduser())
+    candidates += [HERE / 'FreeVideo', HERE / 'FreeVideo-engine', HERE.parent / 'FreeVideo-engine']
+    if os.environ.get('LOCALAPPDATA'):
+        candidates.append(Path(os.environ['LOCALAPPDATA']) / 'FreeVideo')
+    candidates += [home / '.local' / 'share' / 'freevideo']
+    candidates += launcher_engines()
+    # Установщик кладёт движок в <папка установки>\FreeVideo-engine; ищем неглубоко в типичных местах.
+    for base in [HERE.parent, home, home / 'Desktop', home / 'Documents', home / 'Downloads',
+                 Path('C:/'), Path('D:/'), Path('E:/')]:
+        try:
+            candidates += [p.parent for p in base.glob('FreeVideo-engine/machine.json')]
+            candidates += [p.parent for p in base.glob('*/FreeVideo-engine/machine.json')]
+        except OSError:
+            pass
+    seen = set()
+    for root in candidates:
+        key = str(root).lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        if ready(root):
+            return root
+    return None
+
+
 def size_from_aspect(aspect, megapixels):
     if aspect not in ASPECTS and ':' in aspect:
         w, h = (int(x) for x in aspect.split(':'))
@@ -180,6 +246,7 @@ def main(argv=None):
     g.add_argument('--vram-gib', type=float, help='ограничить видеопамять (ГиБ)')
     g.add_argument('--ram-gib', type=float, help='ограничить ОЗУ (ГиБ)')
     g.add_argument('--freevideo', help='папка FreeVideo или путь к freevideo.cmd (по умолчанию ./FreeVideo)')
+    g.add_argument('--root', help='папка установки, где лежит machine.json (по умолчанию ищется сама)')
     g.add_argument('--dry-run', action='store_true', help='только показать команду')
     p.add_argument('extra', nargs=argparse.REMAINDER, help='после -- : любые флаги движка как есть')
 
@@ -188,13 +255,26 @@ def main(argv=None):
     if not prompt and not (args.refine_from or args.upscale_from or args.redo_sound):
         p.error('нужен --prompt или --prompt-file')
 
+    root = find_installation(args.root)
+    if root is None or not ready(root):
+        message = ('FreeVideo ещё не установлен (не найден готовый machine.json%s).\n\n'
+                   'Сделай один раз установку и дождись конца (модели скачаются сами, это долго):\n'
+                   '    %s\n\n'
+                   'Если уже ставил через FreeVideo.exe, укажи папку движка:\n'
+                   '    py freevideo_direct.py --root "<папка установки>\\FreeVideo-engine" ...'
+                   % (' в ' + str(root) if root else '',
+                      HERE / 'FreeVideo' / ('setup.cmd' if os.name == 'nt' else 'setup.sh')))
+        if not args.dry_run:
+            sys.exit(message)
+        print(message + '\n', file=sys.stderr)
+
     temp = Path(tempfile.mkdtemp(prefix='freevideo-'))
     prompt_file = temp / 'prompt.txt'
     prompt_file.write_text(prompt or '', encoding='utf-8')
 
     out = Path(args.out).expanduser().resolve()
     out.parent.mkdir(parents=True, exist_ok=True)
-    cmd = engine_command(args.freevideo) + ['generate', '--prompt-file', str(prompt_file), '--out', str(out)]
+    cmd = engine_command(args.freevideo) + (['--root', str(root)] if root else []) + ['generate','--prompt-file', str(prompt_file), '--out', str(out)]
     if not prompt:
         cmd.append('--allow-empty-prompt')
 
