@@ -21,7 +21,8 @@
 
 ```
 freevideo-python/
-├── freevideo_api.py   ← клиент и CLI (один файл, без зависимостей)
+├── freevideo_direct.py ← прямой запуск движка: без ComfyUI, сервера и токена
+├── freevideo_api.py   ← клиент agent API (нужен запущенный FreeVideo)
 ├── examples/          ← готовые сценарии
 └── FreeVideo/         ← исходники FreeVideo (Apache-2.0), чтобы всё было в одном репо
 ```
@@ -46,9 +47,19 @@ cd C:\fv\FreeVideo
 setup.cmd
 ```
 
-В конце FreeVideo откроется в браузере. В следующий раз запускай его так: `C:\fv\FreeVideo\freevideo.cmd`.
+Если в конце откроется браузер, его можно закрыть.
 
-3. Пока FreeVideo запущен, во втором окне терминала:
+3. **Без ComfyUI, без сервера и без токена** — прямой вызов движка:
+
+```bat
+cd C:\fv
+py freevideo_direct.py -p "Neon city at night, rain, camera flies forward" --seconds 8 -o city.mp4
+py freevideo_direct.py -p "She turns and smiles" --first a.png --last b.png --seconds 6 --quality medium -o turn.mp4
+```
+
+Все опции: `py freevideo_direct.py -h`. Тут есть качество, сид, размер и аспект, первый, последний и промежуточные кадры, референсы, аудио, LoRA, превью и доводка, продолжение видео, апскейл и новый звук. Флаги движка, которых нет в списке, можно передать после `--`.
+
+4. Через agent API (картинки, очередь, пачки заданий). Для этого нужен запущенный FreeVideo, потому что токен появляется только когда работает сервер. Запусти `C:\fv\FreeVideo\freevideo.cmd` или FreeVideo.exe, а потом во втором окне:
 
 ```bat
 cd C:\fv
@@ -56,7 +67,7 @@ py freevideo_api.py status
 py freevideo_api.py video -p "Neon city at night, rain, camera flies forward" --seconds 8 -o city.mp4
 ```
 
-Скрипт сам найдёт адрес и токен в `FreeVideo\agent\`. Если ставил FreeVideo по-другому (через FreeVideo.exe), укажи `--root <папка установки>` или переменные `FREEVIDEO_URL` / `FREEVIDEO_TOKEN`.
+Скрипт сам найдёт адрес и токен в `FreeVideo\agent\` (и в `ComfyUI\custom_nodes\...`). Если ставил FreeVideo по-другому (через FreeVideo.exe), укажи `--root <папка установки>` или переменные `FREEVIDEO_URL` / `FREEVIDEO_TOKEN`.
 
 > Вместо шага 2 можно взять готовый установщик [FreeVideo.exe](https://github.com/FlashML-org/FreeVideo/releases/latest/download/FreeVideo.exe) — скрипт работает с ним точно так же.
 

@@ -69,8 +69,26 @@ def candidate_roots():
         yield comfy / 'custom_nodes' / 'FreeVideo'
 
 
+def expand_roots(roots):
+    """Добавляет папку из comfyui.json и копии плагина внутри ComfyUI/custom_nodes."""
+    for root in roots:
+        yield root
+        try:
+            selected = json.loads((root / 'comfyui.json').read_text(encoding='utf-8')).get('installation')
+            if isinstance(selected, str) and selected.strip():
+                path = Path(selected).expanduser()
+                yield path if path.is_absolute() else root / path
+        except (OSError, ValueError, AttributeError):
+            pass
+        for comfy in (root / 'ComfyUI', root / 'vendor' / 'ComfyUI'):
+            try:
+                yield from (node for node in (comfy / 'custom_nodes').iterdir() if node.is_dir())
+            except OSError:
+                pass
+
+
 def find_root():
-    for root in candidate_roots():
+    for root in expand_roots(candidate_roots()):
         if (root / 'agent' / 'token').is_file():
             return root
     return None
@@ -97,8 +115,9 @@ class FreeVideo:
             except OSError:
                 pass
         if not token:
-            raise FreeVideoError(0, 'no_token', 'Не найден токен FreeVideo. Запусти FreeVideo хотя бы раз и укажи '
-                                 '--root <папка установки> (где лежит agent/token) или FREEVIDEO_TOKEN.')
+            raise FreeVideoError(0, 'no_token', 'Не найден токен FreeVideo. Он появляется только когда сервер FreeVideo '
+                                 'запущен (FreeVideo.exe / freevideo.cmd). Запусти его, или укажи --root <папка, где '
+                                 'лежит agent\\token>, или FREEVIDEO_TOKEN. Без сервера и токена: freevideo_direct.py')
         self.root, self.token, self.timeout, self.client_name = root, token, timeout, client_name
         # Локальный сервер — без системного прокси.
         self.opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
